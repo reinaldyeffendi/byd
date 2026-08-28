@@ -1,0 +1,128 @@
+{
+  "theme_strategy": {
+    "marketing_site": "high_contrast_dark_premium",
+    "admin_dashboard": "sleek_monochrome_light_or_dark_toggle",
+    "rationale": "BYD is an innovative, high-tech EV brand. The showroom should feel like stepping into a premium, futuristic luxury dealership—relying heavily on Black, Graphite, Metallic Gray, and White. The dashboard needs hyper-clarity with functional contrast."
+  },
+  "typography": {
+    "headings": {
+      "font_family": "Cabinet Grotesk, General Sans, or Space Grotesk (if allowed on marketing, forbidden on dashboard so use Cabinet Grotesk for both)",
+      "fallback": "sans-serif",
+      "strategy": "The 'Anti-Default' rule. Headings must be tracked tight (tracking-tighter) for a sleek, performance-oriented automotive feel. Use strong weights for primary statements, thin weights for luxury subtext.",
+      "scales": {
+        "h1": "text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tighter leading-none",
+        "h2": "text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight",
+        "h3": "text-2xl sm:text-3xl font-medium tracking-tight",
+        "overline": "uppercase text-xs sm:text-sm font-semibold tracking-[0.2em] text-gray-400"
+      }
+    },
+    "body": {
+      "font_family": "Inter or Manrope",
+      "strategy": "High legibility, clean geometry. Leading-relaxed for content, leading-normal for UI elements.",
+      "scales": {
+        "base": "text-base text-gray-300",
+        "small": "text-sm text-gray-400"
+      }
+    }
+  },
+  "colors": {
+    "palette_archetype": "Swiss High-Contrast / Luxury Automotive",
+    "backgrounds": {
+      "primary": "#050505",
+      "secondary": "#111111",
+      "graphite": "#1C1C1C",
+      "metallic_gray": "#2A2A2A"
+    },
+    "text": {
+      "primary": "#FAFAFA",
+      "secondary": "#A1A1AA",
+      "muted": "#52525B"
+    },
+    "accents": {
+      "primary": "#D92D20",
+      "primary_hover": "#B91C1C",
+      "subtle_red": "rgba(217, 45, 32, 0.15)"
+    },
+    "borders": {
+      "default": "rgba(255, 255, 255, 0.1)",
+      "focus": "#D92D20"
+    },
+    "rules": [
+      "NO excessive generic gradients. Flat, rich, structural grayscale only.",
+      "Never use pure black #000000; use #050505 tinted slightly with blue or warm tone.",
+      "Red accent should be used strictly for primary conversion actions (Booking, Test Drive, Submit)."
+    ]
+  },
+  "visual_enhancers": {
+    "surfaces": {
+      "glassmorphism": "Restricted to sticky navigations (backdrop-blur-xl bg-black/60 border-b border-white/10). No muddy transparency. MUST have 1px inner stroke.",
+      "cards": "Solid Graphite (#1C1C1C) or flat transparent borders (border border-white/10) with crisp edges. Nested radii: rounded-2xl parent, rounded-xl child."
+    },
+    "textures": "Subtle noise overlays on hero sections to kill digital flatness and evoke matte automotive paint.",
+    "icons": "Use @phosphor-icons/react or lucide-react (Duotone or Light weights). NEVER use cartoonish icons or emojis."
+  },
+  "grids_and_layouts": {
+    "spacing_system": "Generous spacing. p-8, p-12, p-16 for containers. The car is the hero; give it room to breathe.",
+    "marketing_bento": "Asymmetrical Mode A 'Tetris' grid. Mix wide scenic car shots (col-span-8) with tall feature lists (col-span-4). Wide gap-8.",
+    "dashboard_grid": "Mode B High Density grid for CMS. Strict hierarchy. gap-6. Flat rectangular cards without heavy shadows.",
+    "alignment": "Optical alignment over geometric. Left-align text blocks for tech specs to feel engineered and precise."
+  },
+  "motion_and_interactions": {
+    "strategy": "Cinematic and subtle. Mimic the smooth acceleration of an EV.",
+    "hover_states": "Crisp transformations. Images scale up slightly (scale-105) within hidden overflow. Buttons lift (-translate-y-1) and gain subtle drop-shadow.",
+    "scroll": "Use Framer Motion for scroll-triggered reveal of featured vehicles. Staggered fade-ins (y: 20 -> y: 0) for lists.",
+    "transitions": "Use specific transition properties. Avoid 'transition-all'. e.g., transition-transform duration-300 ease-out."
+  },
+  "components_strategy": {
+    "marketing": "Custom HTML/Tailwind HTML structural layouts to break standard rigid boxes. Custom hero typography. Image overlay MUST be bg-black/40 max.",
+    "admin_dashboard": "Use Shadcn components extensively (Tables, Cards, Dialogs, Select, Forms). Keep them flat, removing thick default shadows.",
+    "ctas": "Primary CTA: Solid Red (#D92D20). Secondary CTA: Transparent with White border (border-white/20 text-white hover:bg-white/10). Floating WhatsApp CTA should be highly visible but elegant.",
+    "forms": "Minimalist inputs. border-b-2 border-white/20 bg-transparent rounded-none focus:border-red-600. No chunky default inputs."
+  },
+  "accessibility": {
+    "contrast": "Text over hero images must use text-shadow or a gradient scrim (bg-gradient-to-t from-black/80 via-black/30 to-transparent).",
+    "focus": "All interactive elements must have clear focus rings (focus:ring-2 focus:ring-red-600).",
+    "testing": "All interactive/key elements MUST include a data-testid attribute in kebab-case."
+  },
+  "image_urls": {
+    "hero_car": {
+      "url": "https://images.unsplash.com/photo-1570374910698-6db3d787e6fb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHwyfHxsdXh1cnklMjBlbGVjdHJpYyUyMGNhciUyMHdoaXRlfGVufDB8fHx8MTc4NzkwOTQ1M3ww&ixlib=rb-4.1.0&q=85",
+      "description": "White luxury electric car, suitable for BYD Seal representation in the hero."
+    },
+    "tech_charging": {
+      "url": "https://images.unsplash.com/photo-1696276939049-15504f8b5d48?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHw0fHxsdXh1cnklMjBlbGVjdHJpYyUyMGNhciUyMHdoaXRlfGVufDB8fHx8MTc4NzkwOTQ1M3ww&ixlib=rb-4.1.0&q=85",
+      "description": "Electric car charging, for EV tech highlights."
+    },
+    "showroom_exterior": {
+      "url": "https://images.unsplash.com/photo-1769546253924-9e23d794be53?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHwzfHxwcmVtaXVtJTIwY2FyJTIwc2hvd3Jvb218ZW58MHx8fHwxNzg3OTA5NDUzfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Dealership exterior at night with red lighting, representing BYD BIPO Serpong."
+    },
+    "showroom_interior": {
+      "url": "https://images.unsplash.com/photo-1764013290175-2b76e9a00b2e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHwxfHxwcmVtaXVtJTIwY2FyJTIwc2hvd3Jvb218ZW58MHx8fHwxNzg3OTA5NDUzfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Premium car showroom floor."
+    },
+    "dashboard_interior": {
+      "url": "https://images.unsplash.com/photo-1585014165903-6d6c6ebad3e9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w8NjA1ODh8MHwxfHNlYXJjaHw0fHxmdXR1cmlzdGljJTIwY2FyJTIwaW50ZXJpb3IlMjBkYXNoYm9hcmR8ZW58MHx8fHwxNzg3OTA5NDUzfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Futuristic car instrument panel, representing BYD intelligent interior."
+    },
+    "consultant_reinaldy": {
+      "url": "https://images.unsplash.com/photo-1640531005390-38bd92755d6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBhc2lhbiUyMGJ1c2luZXNzbWFuJTIwc3VpdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc4NzkwOTQ1M3ww&ixlib=rb-4.1.0&q=85",
+      "description": "Professional Asian businessman representing Reinaldy Effendi."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install specific dependencies: framer-motion, lucide-react, sonner.",
+    "Implement a premium dark mode for the marketing site and a toggle for the CMS dashboard.",
+    "No generic template layouts. Construct the marketing site with dramatic wide images and overlapping text to mimic luxury editorials.",
+    "Do NOT use completely transparent backgrounds for any drop-downs or sticky headers.",
+    "Do NOT invent colors outside of Black, White, Graphite, Metallic Gray, and subtle Red.",
+    "Ensure 'Reinaldy Effendi' and 'BYD BIPO' are prominently and elegantly displayed."
+  ],
+  "universal_guidelines_for_main_agent": [
+    "Do not converge to generic 'AI slop' aesthetics. Push for dramatic contrast and spatial breathing room.",
+    "Never apply 'transition: all'. Apply targeted transitions.",
+    "Do not center-align body text; align left for engineered readability.",
+    "Every interaction needs a micro-animation (hover, click, focus).",
+    "Missing images must not fall back to placeholders like dummyimage.com; strictly use the provided image_urls."
+  ]
+}

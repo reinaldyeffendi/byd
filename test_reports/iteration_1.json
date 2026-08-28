@@ -1,0 +1,90 @@
+{
+  "summary": "First full test run on BYD BIPO Showroom (both backend + frontend). Public APIs, super-admin auth, admin CRUD, homepage/settings updates, analytics, activity logs, financing, tracking, sitemap, and public UI all work. Two CRITICAL bugs found: (1) all 3 seeded staff accounts cannot log in because their emails use the reserved `.test` TLD which pydantic EmailStr rejects (422), blocking RBAC entirely; (2) brute-force lockout is effectively bypassed because the login identifier uses `request.client.host` which resolves to the ingress pod IP and is round-robined across pods, so attempts never accumulate to MAX_ATTEMPTS=5 on a single identifier. 31 backend tests passed, 1 test failed (brute-force), 10 tests errored (all blocked by staff-login bug).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/auth/login",
+        "issue": "Seeded staff accounts (content@bydbipo.test, sales@bydbipo.test, analytics@bydbipo.test) return 422 'value is not a valid email address: The part after the @-sign is a special-use or reserved name that cannot be used with email.' Pydantic's email-validator library rejects .test TLD. Effect: content_admin, sales_admin, analytics_admin roles cannot log in at all -- RBAC path completely untestable via the API. Fix: change seed staff emails to a valid TLD (e.g., @bydbipo.example.com or @bipoauto.com) AND update /app/memory/test_credentials.md. Alternatively, relax LoginInput.email from EmailStr to plain str with a light regex.",
+        "priority": "CRITICAL"
+      },
+      {
+        "endpoint": "POST /api/auth/login (brute-force lockout)",
+        "issue": "5+ consecutive failed logins for the same email do NOT return 429. Root cause: `_check_lockout` uses identifier = f\"{request.client.host}:{email}\". Behind the k8s ingress, request.client.host is the immediate proxy/pod IP and is round-robined across multiple pods (observed 10.219.3.101 and 10.219.3.90 in db.login_attempts). Attempts split across identifiers, none reaches count=5 within the same identifier. This effectively disables brute-force protection. Fix: use email alone as identifier, or trust X-Forwarded-For (first hop) as client IP.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "auth_router._check_lockout",
+        "issue": "Dead code: the `if last and (now_utc() - last.replace(...) if hasattr(last,'replace') else None): pass` block is a no-op; remove."
+      },
+      {
+        "endpoint": "GET /api/admin/analytics/overview",
+        "issue": "`whatsapp_clicks + await count(...)` inside funnel dict literal works but readability is poor; consider computing once."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminLayout / Dashboard select",
+        "issue": "React hydration warning: `<span>` rendered as child of native `<option>` in /app/frontend/src/admin/Dashboard.jsx line ~72-73 (period selector). Invalid HTML; option children must be plain text. Cause looks like an editor wrapper (`data-ve-dynamic` span). Not blocking but console-noisy.",
+        "selector": "[data-testid='dashboard-period-select'] option",
+        "priority": "LOW"
+      },
+      {
+        "component": "Admin Dashboard charts",
+        "issue": "Multiple recharts warnings: 'width(-1) and height(-1) of chart should be greater than 0'. Chart ResponsiveContainer parents likely have no explicit height on initial paint. Charts still render eventually but log many warnings.",
+        "selector": "recharts ResponsiveContainer",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Admin login attempted with staff role accounts",
+        "issue": "Since backend rejects .test TLD, /admin/login for content_admin/sales_admin/analytics_admin ALWAYS fails with 422 -- staff cannot use the CMS at all. Blocking bug, matches backend CRITICAL#1.",
+        "affected_selectors": ["[data-testid='admin-login-submit']"]
+      }
+    ],
+    "design_issues": [
+      {"screen": "All pages",
+       "issues": ["Repeated 401 console errors on public pages due to /api/auth/me being called before login -- non-fatal but noisy; consider swallowing 401 on the /me probe."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "FIX (critical): change seeded staff account emails from *.test to a real TLD (e.g. @bipoauto.com) and update /app/memory/test_credentials.md. Also consider making seed_admin/seed_staff idempotent for password/email drift.",
+    "FIX (critical): brute-force lockout identifier must not include request.client.host behind ingress; use email only or X-Forwarded-For.",
+    "FIX (low): Dashboard.jsx line ~72 -- ensure <option> children are plain strings (no wrapping span) to avoid React hydration warnings.",
+    "FIX (low): give recharts ResponsiveContainer parents explicit min-height to avoid width/height(-1) warnings.",
+    "CLEANUP: remove dead code in auth_router._check_lockout (the no-op `if ... : pass` block)."
+  ],
+  "critical_code_review_comments": [
+    "Login rate limiter identifier is IP-based but IP is unreliable behind ingress -> lockout ineffective. Move to email-based rate limit or use X-Forwarded-For with trusted proxy config.",
+    "EmailStr in LoginInput and UserInput rejects .test/.example/.invalid reserved TLDs -- seed data must avoid these TLDs or validation must be loosened for internal accounts.",
+    "seed.py does not appear to update existing staff accounts if seed data drifts (couldn't verify -- file not opened). Recommend idempotent upserts and re-hashing password when it changes.",
+    "core.get_current_user calls ObjectId(payload['sub']) directly instead of oid() helper -- would 500 on malformed sub instead of 401. Wrap in try/except InvalidId -> 401.",
+    "admin_router.update_item allows arbitrary fields via `payload: dict` -- no schema/whitelist. Any field can be overwritten including `views`, `source`, `created_at` filter check exists but easy to bypass with `_id` (excluded) but not e.g. `password_hash` on user collections if reused. Consider per-resource Pydantic models.",
+    "activity_logs stores previous_value=ser(existing) which may contain very large nested docs for vehicles -- can bloat DB over time; consider storing diff or key fields only.",
+    "public_router.compare returns docs but does not error if fewer than requested slugs match (silently drops missing) -- consider returning per-slug status."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (created)"
+  ],
+  "success_rate": {
+    "backend": "74% (31/42 collected; 10 blocked by staff-login bug, 1 real fail: brute-force lockout)",
+    "frontend": "~90% (all major public flows + super-admin login work; only React HTML warnings)"
+  },
+  "test_credentials": "Super admin login OK: cheapme07@gmail.com / BydBipo2026!. Staff accounts NON-FUNCTIONAL (see critical bug 1).",
+  "seed_data_creation": "None outside natural test artifacts (a few TEST_ leads, TEST_Vehicle_ archived, test users deleted).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After main agent fixes staff emails and brute-force identifier, re-run /app/backend/tests/backend_test.py -- the RBAC and lead-status tests (currently ERROR due to staff login) should then pass. Verify /api/admin/import/run requires network egress to https://byd.bipoauto.com/ (was not exercised deeply; may 502 in preview). Media upload skipped if object storage returns 502 (environment limitation). Add UI tests for LeadForm/TestDriveForm/FinancingCalculator interactive submissions once staff accounts fixed.",
+  "rca_of_the_issue": {
+    "staff_login_422": "pydantic email-validator rejects reserved TLDs per RFC 2606 (.test, .example, .invalid, .localhost). Seed inserts users directly via db.users.insert_one bypassing validation, but LoginInput uses EmailStr which enforces validation on the way in.",
+    "brute_force_bypass": "identifier composed of `{request.client.host}:{email}`. Behind k8s ingress with multiple backend pods, client.host is the peer IP of whichever pod receives the request. Observed pods 10.219.3.90 and 10.219.3.101; 7 sequential curl requests split across pods, so no single identifier ever accumulated >=5 failures. login_attempts collection confirms: two rows with count=5 vs count=2 for the same email but different pod IPs. Reproduce: `for i in {1..7}; do curl -X POST .../api/auth/login -d '{\"email\":\"a@b.com\",\"password\":\"x\"}'; done` -- expect eventual 429, actually always 401. Mitigation: use email alone as identifier."
+  }
+}

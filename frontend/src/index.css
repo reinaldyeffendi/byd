@@ -1,0 +1,155 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Manrope:wght@300;400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --byd-bg: #050505;
+        --byd-surface: #111111;
+        --byd-graphite: #1c1c1c;
+        --byd-metal: #2a2a2a;
+        --byd-red: #d92d20;
+
+        --background: 0 0% 100%;
+        --foreground: 0 0% 6%;
+        --card: 0 0% 100%;
+        --card-foreground: 0 0% 6%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 0 0% 6%;
+        --primary: 0 0% 8%;
+        --primary-foreground: 0 0% 98%;
+        --secondary: 0 0% 96%;
+        --secondary-foreground: 0 0% 9%;
+        --muted: 0 0% 96%;
+        --muted-foreground: 0 0% 42%;
+        --accent: 0 0% 95%;
+        --accent-foreground: 0 0% 9%;
+        --destructive: 4 74% 52%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 0 0% 90%;
+        --input: 0 0% 88%;
+        --ring: 4 74% 52%;
+        --chart-1: 4 74% 52%;
+        --chart-2: 0 0% 40%;
+        --chart-3: 0 0% 62%;
+        --chart-4: 25 80% 55%;
+        --chart-5: 200 30% 45%;
+        --radius: 0.375rem;
+    }
+    .dark {
+        --background: 0 0% 4%;
+        --foreground: 0 0% 98%;
+        --card: 0 0% 7%;
+        --card-foreground: 0 0% 98%;
+        --popover: 0 0% 7%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 0 0% 98%;
+        --primary-foreground: 0 0% 9%;
+        --secondary: 0 0% 11%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 0 0% 13%;
+        --muted-foreground: 0 0% 65%;
+        --accent: 0 0% 16%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 4 74% 45%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 0 0% 16%;
+        --input: 0 0% 18%;
+        --ring: 4 74% 52%;
+    }
+    * {
+        @apply border-border;
+    }
+    body {
+        margin: 0;
+        @apply bg-background text-foreground;
+        font-family: "Manrope", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    .font-display {
+        font-family: "Bricolage Grotesque", "Manrope", sans-serif;
+        letter-spacing: -0.02em;
+    }
+    ::selection {
+        background: var(--byd-red);
+        color: #fff;
+    }
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+@layer components {
+    .byd-shell {
+        background: var(--byd-bg);
+        color: #fafafa;
+    }
+    .overline {
+        @apply uppercase text-[11px] sm:text-xs font-semibold tracking-[0.24em] text-white/45;
+    }
+    .container-byd {
+        @apply mx-auto w-full max-w-[1400px] px-5 sm:px-8 lg:px-12;
+    }
+    .grain::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.35;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+        mix-blend-mode: overlay;
+    }
+    .btn-primary-byd {
+        @apply inline-flex items-center justify-center gap-2 bg-[#d92d20] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.12em] text-white transition-transform duration-300 ease-out hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d92d20] focus-visible:ring-offset-2 focus-visible:ring-offset-black;
+    }
+    .btn-ghost-byd {
+        @apply inline-flex items-center justify-center gap-2 border border-white/25 px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.12em] text-white transition-colors duration-300 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60;
+    }
+    .field-byd {
+        @apply w-full rounded-none border-0 border-b-2 border-white/20 bg-transparent px-0 py-3 text-base text-white placeholder:text-white/35 transition-colors duration-300 focus:border-[#d92d20] focus:outline-none;
+    }
+    .hairline {
+        @apply border-t border-white/10;
+    }
+    .reveal-up {
+        animation: revealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+}
+
+@keyframes revealUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.prose-byd h2 {
+    @apply mt-10 mb-3 text-2xl font-semibold;
+}
+.prose-byd h3 {
+    @apply mt-8 mb-2 text-xl font-semibold;
+}
+.prose-byd p {
+    @apply mb-4 leading-relaxed text-white/70;
+}
+.prose-byd ul {
+    @apply mb-4 list-disc space-y-1 pl-6 text-white/70;
+}
+.prose-byd blockquote {
+    @apply my-6 border-l-2 border-[#d92d20] pl-5 italic text-white/80;
+}
+
+@layer base {
+    [data-debug-wrapper="true"] {
+        display: contents !important;
+    }
+}
