@@ -5,6 +5,7 @@ import { ArrowLeft, Eye, Save, Plus, Trash2 } from "lucide-react";
 import { api, apiError } from "@/lib/api";
 import { SCHEMAS } from "./schemas";
 import { AdminButton, Card, Field, PageHeader, inputClass } from "./ui";
+import RichTextEditor from "./RichTextEditor";
 
 const getPath = (obj, path) =>
   path.split(".").reduce((acc, key) => (acc === undefined || acc === null ? undefined : acc[key]), obj);
@@ -91,10 +92,15 @@ export default function ResourceEditor({ resource }) {
     const value = getPath(form, f.key);
     const testId = `field-${f.key.replace(/\./g, "-")}`;
 
-    if (f.type === "textarea" || f.type === "richtext")
+    if (f.type === "richtext")
       return (
-        <textarea rows={f.type === "richtext" ? 12 : 3} data-testid={testId}
-                  className={`${inputClass} font-mono`} value={value || ""}
+        <RichTextEditor value={value || ""} onChange={(html) => update(f.key, html)} testId={testId} />
+      );
+
+    if (f.type === "textarea")
+      return (
+        <textarea rows={3} data-testid={testId}
+                  className={inputClass} value={value || ""}
                   onChange={(e) => update(f.key, e.target.value)} />
       );
 

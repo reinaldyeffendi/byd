@@ -1,10 +1,19 @@
 from datetime import datetime, timezone
+import os
 from typing import Optional, List
 
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Query
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from core import db, ser, iso_now, now_utc, log_activity
+from emailer import notify_new_lead, notify_new_test_drive
+
+
+async def _notify_recipient() -> tuple[str, str]:
+    settings = await get_settings()
+    recipient = settings.get("lead_notification_email") or ""
+    site = (os.environ.get("PUBLIC_SITE_URL") or "").rstrip("/")
+    return recipient, (f"{site}/admin/leads" if site.startswith("https://") else None)
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -292,7 +301,7 @@ async def _dup_guard(collection, whatsapp: str, extra: dict):
 
 
 @router.post("/leads", status_code=201)
-async def create_lead(payload: LeadInput, request: Request):
+async def create_lead(payload: LeadInput, request: Request, background: BackgroundTasks):
     data = payload.model_dump()
     dup = await _dup_guard(db.leads, data["whatsapp"], {"vehicle_slug": data.get("vehicle_slug")})
     if dup:
@@ -317,12 +326,15 @@ async def create_lead(payload: LeadInput, request: Request):
                                           "vehicle_slug": data.get("vehicle_slug"),
                                           "utm_source": data.get("utm_source"),
                                           "created_at": iso_now()})
+    recipient, admin_url = await _notify_recipient()
+    if recipient:
+        background.add_task(notify_new_lead, recipient, doc, admin_url)
     return {"id": str(res.inserted_id), "duplicate": False,
             "message": "Terima kasih! Sales consultant kami akan menghubungi Anda."}
 
 
 @router.post("/test-drives", status_code=201)
-async def create_test_drive(payload: TestDriveInput, request: Request):
+async def create_test_drive(payload: TestDriveInput, request: Request, background: BackgroundTasks):
     data = payload.model_dump()
     v = await db.vehicles.find_one({"slug": data["vehicle_slug"], **PUBLISHED}, {"name": 1})
     if not v:
@@ -342,6 +354,10 @@ async def create_test_drive(payload: TestDriveInput, request: Request):
                                       "created_at": iso_now(), "updated_at": iso_now()})
     await db.analytics_events.insert_one({"event": "click_test_drive", "session_id": data.get("session_id"),
                                           "vehicle_slug": data["vehicle_slug"], "created_at": iso_now()})
+    recipient, admin_url = await _notify_recipient()
+    if recipient:
+        background.add_task(notify_new_test_drive, recipient, doc,
+                            admin_url.replace("/admin/leads", "/admin/test-drives") if admin_url else None)
     return {"id": str(res.inserted_id), "duplicate": False,
             "message": "Permintaan test drive terkirim. Kami akan mengonfirmasi jadwal Anda."}
 

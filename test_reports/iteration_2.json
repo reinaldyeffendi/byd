@@ -1,0 +1,65 @@
+{
+  "summary": "Iterasi 2 tested end-to-end (both backend+frontend). All 5 requested features work: Import Cepat (backend+UI), promo draft skeleton (draft visible in admin, NOT leaking to public), cron publish-scheduled (401 without auth, 200 with Bearer secret, scheduled article -> published), rich-text WYSIWYG editor (all format buttons present + typeable + persists), example-data badges/notes on 6/7 seeded vehicles + badge disappears after quick-import. Backend: 56/57 pytest passed. Frontend: super-admin login + all admin pages + public pages render OK. Prior iteration-1 CRITICAL bugs (staff .test emails, per-IP brute-force) are FIXED (verified: staff@bipoauto.com login OK, brute-force 429 seen on 6th attempt). One NEW backend bug found: lead_notification_email field is missing from stored site_settings doc because seed.py only inserts DEFAULT_SETTINGS when doc absent (non-idempotent for new keys). Field is exposed in Site Settings UI (defaults to empty) so admins can still set it via PUT — but out-of-the-box the seed value 'Reinaldyeffendiwork@gmail.com' never lands in DB.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "seed.seed_settings / GET /api/admin/settings",
+        "issue": "New DEFAULT_SETTINGS keys (esp. lead_notification_email) are never merged into an already-existing site_settings document. seed.py line ~257: `if not await db.site_settings.find_one(...): insert`. On a DB seeded from iteration 1 (before this field existed), the notification email is missing -> notify_new_lead()/notify_new_test_drive() likely fall back to hardcoded default or no-op. Fix: use `update_one({...}, {'$setOnInsert': {...}, '$set': {k:v for missing keys}}, upsert=True)` OR `$set` only for keys not present via a per-key check."
+      },
+      {
+        "endpoint": "GET /api/admin/settings response",
+        "issue": "Because of the above, admin.settings response object does NOT contain the field, but frontend still renders the input (uses schema, not response keys). Cosmetic mismatch; makes it easy to overlook."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminLayout / Dashboard select",
+        "issue": "React hydration warning persists (from iteration 1): `<span>` rendered as child of native `<option>` — likely editor-injected `data-ve-dynamic` wrapper. Not blocking.",
+        "selector": "[data-testid='dashboard-period-select'] option",
+        "priority": "LOW"
+      },
+      {
+        "component": "Recharts ResponsiveContainer",
+        "issue": "Multiple 'width(-1) and height(-1)' warnings on Dashboard. Charts still render. From iteration 1, still present.",
+        "selector": "recharts ResponsiveContainer",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "FIX (minor): make seed_settings idempotent for NEW keys — merge missing DEFAULT_SETTINGS keys into existing site_settings doc (specifically lead_notification_email). Currently notify_new_lead falls back to whatever default the emailer uses, which may not match the required address 'Reinaldyeffendiwork@gmail.com'.",
+    "FIX (low): Dashboard.jsx <option> children must be plain text; remove the wrapping span to eliminate the React hydration warning (unchanged from iteration 1).",
+    "FIX (low): give recharts ResponsiveContainer parents explicit min-height."
+  ],
+  "critical_code_review_comments": [
+    "seed.py should be truly idempotent — currently new fields added to DEFAULT_SETTINGS/HOMEPAGE never propagate to previously-seeded DBs. Same risk exists for the 'kerangka promo draft' skeleton if it were altered.",
+    "cron_router._run_publish uses payload run_id / X-Webhook-Id as idempotency key -> good, but returns 202-equivalent {accepted:true} with 200 status; consider returning 202 to signal async. Also, `payload: dict | None = None` will 422 if request body is not JSON (curl without body works because default is None) — verified OK.",
+    "quick_import_vehicles sets is_example_data=False only when there are non-empty changes; a row with only slug and no other cols leaves the flag as-is (documented behaviour).",
+    "public_router leads/test-drives BackgroundTasks based email notification: if _notify_recipient() reads settings on every call, DB access inside background task is fine. Ensure emailer._assert_safe_email handles missing recipient gracefully (skip send) — recommended to verify.",
+    "RichTextEditor: verify that saved HTML is sanitised server-side before rendering on the public /articles/{slug} page to prevent XSS from admin-authored content (super-admin trust boundary but still)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (updated staff emails from *.test to @bipoauto.com; added 15 new tests for QuickImport, Cron, ExampleData, LeadNotification)"
+  ],
+  "success_rate": {
+    "backend": "98% (56/57 passed; 1 fail = lead_notification_email missing from seed)",
+    "frontend": "100% (all iteration-2 feature checks passed: quick-import page + template + preview, WYSIWYG editor container + bold/italic/h2/bullet buttons + typing works, draft promo present in admin & not on public, example badges on 6 vehicles, example note on detail page)"
+  },
+  "test_credentials": "Super admin cheapme07@gmail.com/BydBipo2026! OK. Staff accounts content/sales/analytics@bipoauto.com / Staff2026! OK (fixed since iter 1).",
+  "seed_data_creation": "TEST_ScheduledArticle_* articles created and cleaned up. Quick-import applied a new starting_price to the first vehicle in the catalog (byd-atto-1) as part of the persistence test — is_example_data=false for that model now. If a full clean state is needed, restore seed for that one vehicle.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Only remaining backend bug is minor: seed.py must be idempotent for adding new keys to site_settings. Verify via GET /api/admin/settings that lead_notification_email is present after fix. Iteration-2 features (quick-import, WYSIWYG, cron, example flags, draft-promo, background email notifications) are all working end-to-end. NB: One test lightly mutated byd-atto-1 (starting_price) during quick-import apply test — not restored.",
+  "rca_of_the_issue": {
+    "lead_notification_email_missing_in_db": "seed.py inserts DEFAULT_SETTINGS only if the site_settings document does not exist. In this preview environment the doc was already created during iteration-1 (before lead_notification_email was added to DEFAULT_SETTINGS in iteration-2). Restart / re-seed did not merge. Test proof: GET /api/admin/settings response keys do NOT contain 'lead_notification_email'. Reproduction: fresh DB -> field present; upgraded DB -> field absent. Mitigation: `for k, v in DEFAULT_SETTINGS.items(): update_one({'_key':'site_settings'}, {'$setOnInsert': {k:v}}, upsert=True)` per key, OR a `$set` on missing keys after fetching existing doc."
+  }
+}

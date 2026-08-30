@@ -2,13 +2,14 @@ import { useState } from "react";
 import { NavLink, Outlet, Navigate, Link, useLocation } from "react-router-dom";
 import {
   BarChart3, Car, Tag, Newspaper, CalendarDays, Quote, Users, CalendarCheck,
-  Image, LayoutDashboard, Settings, DownloadCloud, ScrollText, UserCog, LogOut, Menu, X, ExternalLink,
+  Image, LayoutDashboard, Settings, DownloadCloud, ScrollText, UserCog, LogOut, Menu, X, ExternalLink, Table2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, perm: "analytics", end: true },
   { to: "/admin/vehicles", label: "Kendaraan", icon: Car, perm: "vehicles" },
+  { to: "/admin/quick-import", label: "Import Cepat Harga", icon: Table2, perm: "vehicles" },
   { to: "/admin/promotions", label: "Promo", icon: Tag, perm: "promotions" },
   { to: "/admin/articles", label: "Artikel", icon: Newspaper, perm: "articles" },
   { to: "/admin/events", label: "Event", icon: CalendarDays, perm: "events" },

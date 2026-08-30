@@ -24,6 +24,12 @@ export const VehicleCard = ({ vehicle, index = 0 }) => {
               Promo
             </span>
           )}
+          {vehicle.is_example_data && (
+            <span data-testid={`vehicle-example-badge-${vehicle.slug}`}
+                  className="border border-amber-400/60 bg-amber-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-200">
+              Contoh
+            </span>
+          )}
         </div>
         <img
           src={vehicle.hero_image || vehicle.images?.[0]?.url}

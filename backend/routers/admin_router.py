@@ -396,6 +396,95 @@ async def activity_logs(page: int = 1, limit: int = Query(30, le=200),
     return {"items": [ser(d) for d in docs], "total": total, "page": page, "limit": limit}
 
 
+class QuickImportInput(BaseModel):
+    text: str
+    dry_run: bool = True
+
+
+QUICK_FIELDS = {
+    "slug": ("slug", "str"),
+    "nama": ("name", "str"),
+    "name": ("name", "str"),
+    "harga": ("starting_price", "num"),
+    "starting_price": ("starting_price", "num"),
+    "harga_promo": ("promo_price", "num"),
+    "baterai": ("battery_kwh", "num"),
+    "battery_kwh": ("battery_kwh", "num"),
+    "jarak": ("range_km", "num"),
+    "range_km": ("range_km", "num"),
+    "kursi": ("seating", "num"),
+    "seating": ("seating", "num"),
+    "motor": ("motor", "str"),
+    "tenaga": ("power", "str"),
+    "power": ("power", "str"),
+    "torsi": ("torque", "str"),
+    "torque": ("torque", "str"),
+    "pengisian": ("charging", "str"),
+    "charging": ("charging", "str"),
+    "akselerasi": ("acceleration", "str"),
+    "garansi": ("warranty", "str"),
+    "warranty": ("warranty", "str"),
+}
+
+
+def _parse_quick_table(text: str) -> tuple[list[dict], list[str]]:
+    lines = [ln for ln in text.strip().splitlines() if ln.strip()]
+    if len(lines) < 2:
+        raise HTTPException(status_code=422,
+                            detail="Tempel minimal satu baris header dan satu baris data")
+    delimiter = "\t" if "\t" in lines[0] else (";" if ";" in lines[0] else ",")
+    header = [h.strip().lower().replace(" ", "_") for h in lines[0].split(delimiter)]
+    unknown = [h for h in header if h and h not in QUICK_FIELDS]
+    rows, errors = [], []
+    if unknown:
+        errors.append(f"Kolom tidak dikenali diabaikan: {', '.join(unknown)}")
+    for idx, line in enumerate(lines[1:], start=2):
+        cells = [c.strip() for c in line.split(delimiter)]
+        row: dict = {}
+        for i, col in enumerate(header):
+            mapping = QUICK_FIELDS.get(col)
+            if not mapping or i >= len(cells) or cells[i] == "":
+                continue
+            field, kind = mapping
+            value = cells[i]
+            if kind == "num":
+                cleaned = re.sub(r"[^\d.]", "", value.replace(",", ""))
+                if not cleaned:
+                    errors.append(f"Baris {idx}: nilai '{value}' pada kolom {col} bukan angka")
+                    continue
+                row[field] = float(cleaned) if "." in cleaned else int(cleaned)
+            else:
+                row[field] = value
+        if not row.get("slug") and not row.get("name"):
+            errors.append(f"Baris {idx}: butuh kolom slug atau nama")
+            continue
+        rows.append(row)
+    return rows, errors
+
+
+@router.post("/quick-import/vehicles")
+async def quick_import_vehicles(payload: QuickImportInput,
+                                user: dict = Depends(require_perm("vehicles"))):
+    rows, errors = _parse_quick_table(payload.text)
+    preview, applied = [], 0
+    for row in rows:
+        query = {"slug": slugify(row["slug"])} if row.get("slug") else {"name": row["name"]}
+        existing = await db.vehicles.find_one(query)
+        entry = {"match": "update" if existing else "not_found",
+                 "target": (existing or {}).get("name") or row.get("name") or row.get("slug"),
+                 "changes": {k: v for k, v in row.items() if k not in ("slug", "name")}}
+        if existing and not payload.dry_run and entry["changes"]:
+            await db.vehicles.update_one(
+                {"_id": existing["_id"]},
+                {"$set": {**entry["changes"], "is_example_data": False,
+                          "example_note": "", "updated_at": iso_now()}})
+            await log_activity(user, "quick_import_update", "vehicles", str(existing["_id"]),
+                               {k: existing.get(k) for k in entry["changes"]}, entry["changes"])
+            applied += 1
+        preview.append(entry)
+    return {"rows": preview, "errors": errors, "applied": applied, "dry_run": payload.dry_run}
+
+
 # ---------- Import / Sync ----------
 class ImportInput(BaseModel):
     url: Optional[str] = None

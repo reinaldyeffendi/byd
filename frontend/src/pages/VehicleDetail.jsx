@@ -139,6 +139,12 @@ export default function VehicleDetail() {
             <p className="mt-3 text-xs text-white/35">
               Terakhir diperbarui: {new Date(vehicle.updated_at).toLocaleDateString("id-ID")}
             </p>
+            {vehicle.is_example_data && (
+              <p data-testid="vehicle-example-note"
+                 className="mt-4 border border-amber-400/40 bg-amber-400/10 p-3 text-xs leading-relaxed text-amber-200">
+                {vehicle.example_note || "CONTOH — harap diganti dengan data resmi."}
+              </p>
+            )}
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">

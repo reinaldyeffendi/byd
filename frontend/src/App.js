@@ -28,6 +28,7 @@ import MediaLibrary from "@/admin/MediaLibrary";
 import HomepageEditor from "@/admin/HomepageEditor";
 import SettingsPage from "@/admin/SettingsPage";
 import ImportPage from "@/admin/ImportPage";
+import QuickImportPage from "@/admin/QuickImportPage";
 import ActivityLogsPage from "@/admin/ActivityLogsPage";
 import UsersPage from "@/admin/UsersPage";
 
@@ -75,6 +76,7 @@ function App() {
               <Route path="homepage" element={<HomepageEditor />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="import" element={<ImportPage />} />
+              <Route path="quick-import" element={<QuickImportPage />} />
               <Route path="logs" element={<ActivityLogsPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />

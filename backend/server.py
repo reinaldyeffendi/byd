@@ -13,6 +13,7 @@ from starlette.middleware.cors import CORSMiddleware
 from core import client, db, get_object, ser, get_current_user
 from routers.admin_router import router as admin_router
 from routers.auth_router import router as auth_router
+from routers.cron_router import router as cron_router
 from routers.public_router import router as public_router
 from seed import run_seed
 
@@ -60,6 +61,7 @@ async def sitemap(request: Request):
 api_router.include_router(auth_router)
 api_router.include_router(public_router)
 api_router.include_router(admin_router)
+api_router.include_router(cron_router)
 app.include_router(api_router)
 
 app.add_middleware(

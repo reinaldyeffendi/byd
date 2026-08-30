@@ -29,6 +29,7 @@ const GROUPS = [
       ["whatsapp_number", "Nomor WhatsApp (628…)"],
       ["phone", "Telepon"],
       ["email", "Email"],
+      ["lead_notification_email", "Email Notifikasi Lead"],
       ["instagram", "Handle Instagram"],
       ["instagram_url", "URL Instagram"],
       ["maps_url", "URL Google Maps"],

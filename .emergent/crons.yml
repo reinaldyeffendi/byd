@@ -1,0 +1,8 @@
+crons:
+  - name: publish-scheduled
+    description: "Menerbitkan promo/artikel/event terjadwal dan mengarsipkan promo kedaluwarsa"
+    cron: "*/15 * * * *"
+    endpoint: "{{BASE_URL}}/api/cron/publish-scheduled"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    method: POST
+    enabled: true

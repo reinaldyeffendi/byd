@@ -20,6 +20,7 @@ DEFAULT_SETTINGS = {
     "whatsapp_number": "6281234567890",
     "phone": "6281234567890",
     "email": "sales@bydbipo.example",
+    "lead_notification_email": "Reinaldyeffendiwork@gmail.com",
     "instagram": "@reinaldyeffendi_byd",
     "instagram_url": "https://instagram.com/reinaldyeffendi_byd",
     "maps_url": "https://maps.google.com/?q=BYD+BIPO+Serpong",
@@ -155,6 +156,61 @@ LEGAL_PAGES = [
     ("cookie-policy", "Kebijakan Cookie", "<p>Kami menggunakan penyimpanan lokal peramban dan cookie untuk mengingat kendaraan yang Anda lihat, menyimpan preferensi perbandingan, dan mengukur performa kampanye.</p><h2>Kategori</h2><p>Cookie esensial diperlukan agar situs berfungsi. Cookie analitik hanya diaktifkan setelah Anda memberikan persetujuan.</p><h2>Mengelola persetujuan</h2><p>Anda dapat menolak cookie analitik melalui banner persetujuan yang muncul saat kunjungan pertama.</p>"),
 ]
 
+EXAMPLE_SPECS = {
+    "byd-atto-1": {"starting_price": 245000000, "battery_kwh": 30.1, "range_km": 300, "seating": 5,
+                   "motor": "Motor listrik depan", "power": "70 kW", "torque": "135 Nm",
+                   "charging": "AC 6,6 kW / DC 40 kW", "acceleration": "0-100 km/jam 12,0 detik"},
+    "byd-dolphin": {"starting_price": 360000000, "battery_kwh": 44.9, "range_km": 410, "seating": 5,
+                    "motor": "Motor listrik depan", "power": "150 kW", "torque": "310 Nm",
+                    "charging": "AC 11 kW / DC 60 kW", "acceleration": "0-100 km/jam 7,0 detik"},
+    "byd-atto-3": {"starting_price": 465000000, "battery_kwh": 60.5, "range_km": 480, "seating": 5,
+                   "motor": "Motor listrik depan", "power": "150 kW", "torque": "310 Nm",
+                   "charging": "AC 7 kW / DC 88 kW", "acceleration": "0-100 km/jam 7,3 detik"},
+    "byd-seal": {"starting_price": 630000000, "battery_kwh": 82.5, "range_km": 580, "seating": 5,
+                 "motor": "Motor listrik belakang", "power": "230 kW", "torque": "360 Nm",
+                 "charging": "AC 11 kW / DC 150 kW", "acceleration": "0-100 km/jam 5,9 detik"},
+    "byd-sealion-7": {"starting_price": 680000000, "battery_kwh": 82.5, "range_km": 540, "seating": 5,
+                      "motor": "Motor listrik belakang", "power": "230 kW", "torque": "380 Nm",
+                      "charging": "AC 11 kW / DC 150 kW", "acceleration": "0-100 km/jam 6,7 detik"},
+    "byd-m6": {"starting_price": 379000000, "battery_kwh": 55.4, "range_km": 420, "seating": 7,
+               "motor": "Motor listrik depan", "power": "120 kW", "torque": "310 Nm",
+               "charging": "AC 7 kW / DC 80 kW", "acceleration": "0-100 km/jam 10,1 detik"},
+    "byd-m6-dm-i": {"starting_price": 399000000, "battery_kwh": 18.3, "range_km": 1000, "seating": 7,
+                    "motor": "Hybrid DM-i", "power": "145 kW kombinasi", "torque": "300 Nm",
+                    "charging": "AC 3,3 kW", "acceleration": "0-100 km/jam 8,5 detik"},
+}
+
+EXAMPLE_NOTE = ("CONTOH — harap diganti dengan data resmi. "
+                "Angka ini hanya placeholder agar tampilan dapat dinilai.")
+
+
+async def fill_example_specs():
+    """Isi angka contoh yang ditandai jelas untuk model yang belum punya harga.
+    Data ini bukan data resmi dan ditandai is_example_data=True di seluruh UI."""
+    for slug, specs in EXAMPLE_SPECS.items():
+        doc = await db.vehicles.find_one({"slug": slug})
+        if not doc or doc.get("example_seeded"):
+            continue
+        await db.vehicles.update_one(
+            {"_id": doc["_id"]},
+            {"$set": {**specs,
+                      "warranty": "Garansi baterai 8 tahun (contoh)",
+                      "dimensions": {"length": "4.800 mm (contoh)", "width": "1.875 mm (contoh)",
+                                     "height": "1.500 mm (contoh)", "wheelbase": "2.800 mm (contoh)",
+                                     "ground_clearance": "150 mm (contoh)"},
+                      "features": {
+                          "safety": ["ABS + EBD (contoh)", "6 airbag (contoh)", "Blind spot detection (contoh)"],
+                          "technology": ["Layar putar 12,8 inci (contoh)", "OTA update (contoh)"],
+                          "interior": ["Kursi kulit sintetis (contoh)", "Panoramic sunroof (contoh)"],
+                          "exterior": ["LED headlamp (contoh)", "Velg alloy 18 inci (contoh)"],
+                      },
+                      "is_example_data": True,
+                      "example_note": EXAMPLE_NOTE,
+                      "example_seeded": True,
+                      "updated_at": iso_now()}})
+
+
+
 STAFF = [
     ("content@bipoauto.com", "Content Admin", "content_admin"),
     ("sales@bipoauto.com", "Sales Admin", "sales_admin"),
@@ -247,6 +303,26 @@ async def run_seed():
                 "updated_at": iso_now(),
             })
 
+    if await db.promotions.count_documents({}) == 0:
+        await db.promotions.insert_one({
+            "title": "Kerangka Promo — silakan lengkapi",
+            "slug": "kerangka-promo",
+            "promo_type": "Limited Time",
+            "short_description": "Draft kerangka promo. Isi judul, periode, DP, cicilan, bonus, dan S&K sebelum dipublikasikan.",
+            "description": "<h2>Detail Penawaran</h2><p>Tuliskan rincian promo di sini.</p><h2>Cara Klaim</h2><p>Jelaskan langkah klaim promo.</p>",
+            "status": "draft",
+            "start_date": None, "end_date": None,
+            "price": None, "discount": None, "promo_price": None,
+            "dp": None, "installment": None,
+            "bonus": "", "terms": "",
+            "hero_image": "", "thumbnail": "",
+            "cta_label": "Tanya Promo Ini",
+            "whatsapp_template": "",
+            "vehicle_slugs": [],
+            "seo": {"title": "", "description": ""},
+            "created_at": iso_now(), "updated_at": iso_now(),
+        })
+
     if await db.articles.count_documents({}) == 0:
         for a in ARTICLES:
             await db.articles.insert_one({
@@ -258,3 +334,5 @@ async def run_seed():
                 "seo": {"title": a["title"], "description": a["excerpt"], "og_image": ""},
                 "created_at": iso_now(), "updated_at": iso_now(),
             })
+
+    await fill_example_specs()
